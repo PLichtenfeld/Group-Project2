@@ -1,0 +1,61 @@
+---
+title: "Group Project 2"
+author: "Paul Lichtenfeld"
+date: "2024-05-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages <- c("knitr", "kableExtra", "magrittr", "readr", "geosphere", "plyr", "dplyr", "kable", "tidyverse", "tibble", "ggplot2","reshape2","stringr","leaflet")
+
+install_me <- packages[!(packages %in% installed.packages()[, "Package"])]
+#if (length(install_me)) install.packages(install_me)
+
+library(knitr)
+library(geosphere)
+library(plyr)
+library(dplyr)
+library(kableExtra)
+library(tibble)
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(stringr)
+library(leaflet)
+```
+
+## Objective 1 
+blah blah blah leaflet map 
+
+```{r}
+#two necessary data frames
+deathGlobal<- read.csv("time_series_covid19_deaths_global (1).csv", header = TRUE)
+confirmedGlobal <- read.csv("time_series_covid19_confirmed_global (2).csv", header = TRUE)
+
+#modifies the death data set to what I need 
+finColNameDeath <- (colnames(deathGlobal[ncol(deathGlobal)]))
+
+
+newDeath <- deathGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat), averageLong=(mean(Long)), totalDeaths=sum(.data[[finColNameDeath]]))
+
+
+#modifies the confirmed dataset to be what I need it to be 
+finColNameConfirm <- colnames(confirmedGlobal[ncol(confirmedGlobal)])
+
+newConfirm <- confirmedGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat),averageLong=mean(Long),totalConfirms=sum(.data[[finColNameConfirm]]))
+print(newConfirm)
+
+
+print(newDeath)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
