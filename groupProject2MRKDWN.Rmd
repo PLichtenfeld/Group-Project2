@@ -35,19 +35,68 @@ confirmedGlobal <- read.csv("time_series_covid19_confirmed_global (2).csv", head
 
 #modifies the death data set to what I need 
 finColNameDeath <- (colnames(deathGlobal[ncol(deathGlobal)]))
-
-
-newDeath <- deathGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat), averageLong=(mean(Long)), totalDeaths=sum(.data[[finColNameDeath]]))
+newDeath <- deathGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat, na.rm=TRUE), averageLong=(mean(Long,na.rm = TRUE)), totalDeaths=sum(.data[[finColNameDeath]]))
 
 
 #modifies the confirmed dataset to be what I need it to be 
 finColNameConfirm <- colnames(confirmedGlobal[ncol(confirmedGlobal)])
-
-newConfirm <- confirmedGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat),averageLong=mean(Long),totalConfirms=sum(.data[[finColNameConfirm]]))
-print(newConfirm)
+newConfirm <- confirmedGlobal %>% group_by(Country.Region) %>% summarize(averageLat=mean(Lat,na.rm = TRUE),averageLong=mean(Long,na.rm = TRUE),totalConfirms=sum(.data[[finColNameConfirm]]))
 
 
-print(newDeath)
+
+#Creates a data frame for the visualization 
+confirmLocations <- data.frame(
+  label = (deframe(newConfirm[,1])),
+  latitude = deframe(newConfirm[,2]),
+  longitude = deframe(newConfirm[,3]),
+  totalConfirms = deframe(newConfirm[,4])
+  
+)
+#creates a data frame for the death part of the visualization 
+deathLocations <- data.frame(
+  label = deframe(newDeath[,1]),
+  latitude = deframe(newDeath[,2]),
+  longitude = deframe(newDeath[,3]),
+  totalDeaths = deframe(newDeath[,4])
+)
+
+#color pallette function call 
+pal <- colorFactor(c("navy","purple","red"), domain= newConfirm$totalConfirms)
+secPal <- colorFactor(c("navy","purple","red"), domain= newDeath$totalDeaths)
+
+#creates interactive visualization 
+leaflet() %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  #first circle group for the confirmed data set 
+  addCircles(
+    data = confirmLocations,
+    lat = ~latitude,
+    lng = ~ longitude,
+    popup = ~as.character(totalConfirms),
+    label = ~label,
+    radius = 190000,
+    stroke = FALSE, fillOpacity = 0.5, 
+    color = ~pal(totalConfirms),
+    group = "Confirmations"
+  )%>%
+  addCircles(
+    #second circle group for the death data set 
+    data = deathLocations,
+    lat= ~latitude,
+    lng = ~longitude,
+    popup = ~as.character(totalDeaths),
+    label = ~label, 
+    radius = 190000,
+    stroke = FALSE, fillOpacity = 0.5, 
+    color = ~secPal(totalDeaths),
+    group = "Deaths"
+  )%>%
+  #controls the two possible layers for the visualization
+  addLayersControl(
+    overlayGroups = c("Confirmations","Deaths"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
 ```
 
 ## Including Plots
