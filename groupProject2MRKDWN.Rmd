@@ -23,12 +23,13 @@ library(ggplot2)
 library(reshape2)
 library(stringr)
 library(leaflet)
+devtools::install_github("haozhu233/kableExtra")
 ```
 
 ## Objective 1 
 blah blah blah leaflet map 
 
-```{r}
+```{r Obj1}
 #two necessary data frames
 deathGlobal<- read.csv("time_series_covid19_deaths_global (1).csv", header = TRUE)
 confirmedGlobal <- read.csv("time_series_covid19_confirmed_global (2).csv", header = TRUE)
@@ -99,12 +100,37 @@ leaflet() %>%
 
 ```
 
-## Including Plots
+## Objective 2 
 
-You can also embed plots, for example:
+something something top countries 
+```{r Obj2}
+#sets a new data frame for the confirmation data set 
+newerConfirm <- select(newConfirm, Country.Region, totalConfirms)
+newerConfirm <- data.frame(newerConfirm %>% arrange(desc(totalConfirms)))
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+#sets a new data frame for the death data set
+newerDeath <- select(newDeath, Country.Region, totalDeaths)
+newerDeath <- data.frame(newerDeath %>% arrange(desc(totalDeaths)))
+
+
+
+#Sets two charts and sets them next to each other
+knitr::kables(
+  list(
+    #First chart
+    knitr::kable(
+      newerConfirm, col.names = c("Country","Count"), valign='t', caption = "Confirms"
+    ),
+    #Second chart
+    knitr::kable(newerDeath, digits = 0, valign='t', col.names = c("Country","Count"), caption = "Death")
+    
+    
+  ),
+  
+ 
+)
+
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
