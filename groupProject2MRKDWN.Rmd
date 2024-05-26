@@ -1,13 +1,13 @@
 ---
 title: "Group Project 2"
-author: "Paul Lichtenfeld"
+author: "Paul Lichtenfeld, Jenna Teresa Smith"
 date: "2024-05-21"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-packages <- c("knitr", "kableExtra", "magrittr", "readr", "geosphere", "plyr", "dplyr", "kable", "tidyverse", "tibble", "ggplot2","reshape2","stringr","leaflet")
+packages <- c("knitr", "kableExtra", "magrittr", "readr", "geosphere", "plyr", "dplyr", "kable", "tidyverse", "tibble", "ggplot2","reshape2","stringr","leaflet","cowplot")
 
 install_me <- packages[!(packages %in% installed.packages()[, "Package"])]
 #if (length(install_me)) install.packages(install_me)
@@ -24,9 +24,10 @@ library(reshape2)
 library(stringr)
 library(leaflet)
 devtools::install_github("haozhu233/kableExtra") 
+library(cowplot)
 ```
 
-## Objective 1 
+## Objective 1 Authored by Paul 
 The objective was to create an interactive map for both the global death dataset and the global confirmation dataset. The first thing I did was read in the two data frames. Next I modified the death data set. First I set a variable to be the column name of the final column in the data set. I then created a new variable which held the data set grouped by the country, averaged out the latitude and longitude for countries with multiple entries, and summed the total number of deaths for countries with multiple entries. I then did the same for the confirmed data set. I then made two data frames which held the labels, latitude, longitude, and the total number of confirmations/deaths for the visualization. I then wrote the color palettes for the two map layers. I then created the visualization, passed it map tiles and set two different toggleable groups, one for the confirmed data set and one for the death data set. 
 
 ```{r Obj1}
@@ -100,7 +101,7 @@ leaflet() %>%
 
 ```
 
-## Objective 2 
+## Objective 2 Authored by Paul 
 
 This objective had to do with creating a chart with kable to show the order of countries in descending order by deaths/confirmations. The first thing I did was make new data frames with only the information I needed. I then called **knitr::kables** and created two kable charts in the list. I added captions and column names to create the two charts next to each other. 
 ```{r Obj2}
@@ -138,44 +139,72 @@ knitr::kables(
 After reading the top tables, you are stunned! The US overtakes every other country in terms of COVID-19 confirmations. As such, you are concerned about the state you live in and would like to understand how COVID-19 events have shaped the trajectory of the disease. Create two scatter plots to gain a better understanding. The first scatter plot should be California’s trajectory for confirmations. The second scatter plot should show California’s top three city trajectories for confirmations. You are interested in studying how the vaccine affected the number of confirmations. The Moderna vaccine was first available as an emergency use authorized (EUA) vaccine and required two shots spaced six weeks apart. Indicate on the plots the day the second dosage was given to those that received the first dosage the day Moderna was EUA (January 29th, 2021). As a diligent scientist that knows that new COVID variants have mutations in the spike protein (the region that the vaccine was developed for), you also want to study how confirmation rates change as new variants become the dominant infectious strain. Indicate on the plots when the delta and omicron variants became the dominant strain in California (May 11th, 2021 and November 26th, 2021 respectively). In the example below, the function plot_grid from the R package cowplot was to organize the graphs into a grid to more easily compare statewide vs top city plots.
 
 ```{r}
+
+
+confirmedUS <- read.csv("time_series_covid19_confirmed_US (1).csv", header = TRUE)
+
+
+
 # Filter data for California
-california_data <- confirmedGlobal %>%
-  filter(Country.Region == "US" & Province.State == "California")
+california_data <- confirmedUS %>%
+  filter(Country_Region == "US" & Province_State == "California")
+
+
+finColNameCali <- colnames(california_data[ncol(california_data)])
+california_data <- california_data %>% mutate(totalConfirms=.data[[finColNameCali]])
+
 
 # Filter data for top three cities in California
 top_cities_data <- california_data %>%
-  arrange(desc(Latest.Confirmed)) %>%
-  head(3)
+  arrange(desc(totalConfirms))%>%
+  slice(1:3)
+
+
+top_cities_data <- select(top_cities_data, Admin2, 12:ncol(top_cities_data))
+
+top_cities_data <- melt(top_cities_data, id.vars="Admin2", variable.name="Date")
+top_cities_data <- slice(top_cities_data,4:nrow(top_cities_data))
+#
+
+california_data <- select(california_data, Admin2, 13:ncol(california_data)-1)
+
+california_data <- melt(california_data, id.vars="Admin2", variable.name="Date")
+
+#california_data <- slice(california_data, 61:nrow(california_data))
+
+#print(top_cities_data)
 
 # Convert Date column to Date type
-california_data$Date <- as.Date(california_data$Date)
+#california_data$Date <- as.Date(california_data$Date)
 
 # Create a scatter plot for California's trajectory
-plot_california <- ggplot(california_data, aes(x = Date, y = Latest.Confirmed)) +
+plot_california <- ggplot(california_data, aes(x = Date, y = value)) +
   geom_point() +
-  geom_vline(xintercept = as.Date("2021-01-29"), linetype = "dashed", color = "blue", size = 1) + # EUA of Moderna vaccine
-  geom_vline(xintercept = as.Date("2021-05-11"), linetype = "dashed", color = "green", size = 1) + # Dominance of Delta variant
-  geom_vline(xintercept = as.Date("2021-11-26"), linetype = "dashed", color = "red", size = 1) + # Dominance of Omicron variant
+  geom_vline(xintercept = ("2021-01-29"), linetype = "dashed", color = "blue", size = 1) + # EUA of Moderna vaccine
+  geom_vline(xintercept = ("2021-05-11"), linetype = "dashed", color = "green", size = 1) + # Dominance of Delta variant
+  geom_vline(xintercept = ("2021-11-26"), linetype = "dashed", color = "red", size = 1) + # Dominance of Omicron variant
   labs(title = "California's COVID-19 Confirmed Cases Trajectory",
        x = "Date",
        y = "Confirmed Cases") +
   theme_minimal()
 
 # Create scatter plots for top three city trajectories
-plot_top_cities <- lapply(1:3, function(i) {
-  ggplot(top_cities_data[i, ], aes(x = Date, y = Latest.Confirmed)) +
+
+  plot_top_cities <- ggplot(top_cities_data, aes(x = Date, y = value)) +
     geom_point() +
-    geom_vline(xintercept = as.Date("2021-01-29"), linetype = "dashed", color = "blue") + # EUA of Moderna vaccine
-    geom_vline(xintercept = as.Date("2021-05-11"), linetype = "dashed", color = "green") + # Dominance of Delta variant
-    geom_vline(xintercept = as.Date("2021-11-26"), linetype = "dashed", color = "red") + # Dominance of Omicron variant
-    labs(title = paste("Top City", i, "COVID-19 Confirmed Cases Trajectory"),
+    geom_vline(xintercept = ("2021-01-29"), linetype = "dashed", color = "blue") + # EUA of Moderna vaccine
+    geom_vline(xintercept = ("2021-05-11"), linetype = "dashed", color = "green") + # Dominance of Delta variant
+    geom_vline(xintercept = ("2021-11-26"), linetype = "dashed", color = "red") + # Dominance of Omicron variant
+    labs(title = paste("Top City", "COVID-19 Confirmed Cases Trajectory"),
          x = "Date",
          y = "Confirmed Cases") +
     theme_minimal()
-})
+
 
 # Organize plots into a grid
-grid_plot <- cowplot::plot_grid(plot_california, plot_top_cities[[1]], plot_top_cities[[2]], plot_top_cities[[3]], ncol = 2)
+#grid_plot <- cowplot::plot_grid(plot_california, plot_top_cities[[1]], plot_top_cities[[2]], plot_top_cities[[3]], ncol = 2)
+
+grid_plot <- cowplot::plot_grid(plot_california, plot_top_cities)
 
 # Display the grid plot
 grid_plot
@@ -183,11 +212,11 @@ grid_plot
 ```
 
 
-## Objective 4
+## Objective 4, this has been transfered to plain text because it does not run and I can not knit the project with it. Authored by Jenna
 
 Although these plots do not tell the whole story, they are great for helping us determine where to look. Different cities may have different populations, population densities, cultural discrepancies, compliance, and city regulations to name a few. We will explore the role of population on these metrics using visualizations. Arrange two scatter plots using cowplot’s plot_grid to show the relationship between population and confirmed counts as well as death counts and confirmed counts. You will need to use a log transform on all variables to show such a relationship. Please consult the example below for an idea of what this may look like. From these graphs we can see that population greatly affects confirmations and deaths. This coincides with our plots above as Los Angeles’s population is 301% greater than San Diego’s population and 406% greater than Riverside’s population!
 
-```{r}
+{r}
 # Filter data for California
 california_confirmed_data <- confirmedGlobal %>%
   filter(Country.Region == "US" & Province.State == "California")
@@ -227,4 +256,4 @@ grid_plot <- plot_grid(plot_population_confirmed, plot_deaths_confirmed, ncol = 
 # Display the grid plot
 grid_plot
 
-```
+
