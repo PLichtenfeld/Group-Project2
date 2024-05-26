@@ -27,7 +27,7 @@ devtools::install_github("haozhu233/kableExtra")
 ```
 
 ## Objective 1 
-blah blah blah leaflet map 
+The objective was to create an interactive map for both the global death dataset and the global confirmation dataset. The first thing I did was read in the two data frames. Next I modified the death data set. First I set a variable to be the column name of the final column in the data set. I then created a new variable which held the data set grouped by the country, averaged out the latitude and longitude for countries with multiple entries, and summed the total number of deaths for countries with multiple entries. I then did the same for the confirmed data set. I then made two data frames which held the labels, latitude, longitude, and the total number of confirmations/deaths for the visualization. I then wrote the color palettes for the two map layers. I then created the visualization, passed it map tiles and set two different toggleable groups, one for the confirmed data set and one for the death data set. 
 
 ```{r Obj1}
 #two necessary data frames
@@ -102,7 +102,7 @@ leaflet() %>%
 
 ## Objective 2 
 
-something something top countries 
+This objective had to do with creating a chart with kable to show the order of countries in descending order by deaths/confirmations. The first thing I did was make new data frames with only the information I needed. I then called **knitr::kables** and created two kable charts in the list. I added captions and column names to create the two charts next to each other. 
 ```{r Obj2}
 #sets a new data frame for the confirmation data set 
 newerConfirm <- select(newConfirm, Country.Region, totalConfirms)
@@ -133,4 +133,3 @@ knitr::kables(
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
